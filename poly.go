@@ -13,6 +13,14 @@ type Poly struct {
 	operator []string
 }
 
+func (eq *Poly) GetDegree(terms []term) {
+	for _, v := range terms {
+		if eq.degree < v.power {
+			eq.degree = v.power
+		}
+	}
+}
+
 func (eq *Poly) ParseEq(str string) error {
 	eq.eqString = str
 	termStrs := strings.Split(str, " ")
@@ -30,14 +38,12 @@ func (eq *Poly) ParseEq(str string) error {
 		if err != nil {
 			return err
 		}
-		if err != nil {
-			panic(err)
-		}
 		i = i + 3
 		if ((i+1)%4) == 0 && i != 0 && i < len(termStrs) {
 			eq.operator = append(eq.operator, termStrs[i])
 		}
 		eq.terms = append(eq.terms, *t)
+		eq.GetDegree(eq.terms)
 	}
 	return nil
 }
