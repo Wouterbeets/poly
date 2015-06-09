@@ -7,23 +7,23 @@ import (
 )
 
 type Equa struct {
-	Rhs Poly
 	Lhs Poly
+	Rhs Poly
 }
 
-func (eq *Equa) ParseEq(str string) error {
+func (eq *Equa) ParseEq(str string) []error {
+	var retError []error
 	strs := strings.Split(str, "=")
 	if len(strs) != 2 {
-		return errors.New("Error: input needs one \"=\" in equation to solve")
+		return append(retError, errors.New("Error: input needs one \"=\" in equation to solve"))
 	}
-	err := eq.Lhs.ParseEq(strs[0])
-	if err != nil {
-		return err
-	} else {
-		err = eq.Rhs.ParseEq(strs[1])
-	}
-	if err != nil {
-		return err
+	errChan := make(chan error)
+	go eq.Lhs.ParseEq(strs[0], errChan)
+	go eq.Rhs.ParseEq(strs[1], errChan)
+	for i := 0; i < 2; i++ {
+		if err := <-errChan; err != nil {
+			retError = append(retError, err)
+		}
 	}
 	return nil
 }
@@ -43,31 +43,35 @@ func (eq *Poly) GetDegree(terms []term) {
 	}
 }
 
-func (eq *Poly) ParseEq(str string) error {
+func (eq *Poly) ParseEq(str string, errChan chan error) {
 	eq.eqString = str
 	termStrs := strings.Split(str, " ")
 	for i := 0; i <= len(termStrs)-3; i++ {
 		t := &term{}
 		err := t.parseMul(termStrs[i])
 		if err != nil {
-			return err
+			errChan <- err
 		}
 		err = t.checkMulOp(termStrs[i+1])
 		if err != nil {
-			return err
+			errChan <- err
 		}
 		err = t.parsePow(termStrs[i+2])
 		if err != nil {
-			return err
+			errChan <- err
 		}
 		i = i + 3
 		if ((i+1)%4) == 0 && i != 0 && i < len(termStrs) {
-			eq.operator = append(eq.operator, termStrs[i])
+			if isOperator(termStrs[i]) {
+				eq.operator = append(eq.operator, termStrs[i])
+			} else {
+				errChan <- errors.New("exepcting operator, found " + termStrs[i])
+			}
 		}
 		eq.terms = append(eq.terms, *t)
 		eq.GetDegree(eq.terms)
 	}
-	return nil
+	errChan <- nil
 }
 
 type term struct {
@@ -95,11 +99,29 @@ func (t *term) checkMulOp(opStr string) error {
 
 func (t *term) parsePow(powStr string) error {
 	indPow := strings.Split(powStr, "^")
-	t.indet = indPow[0]
-	p, err := strconv.Atoi(indPow[1])
-	if err != nil {
-		return err
+	if len(indPow) == 2 {
+		t.indet = indPow[0]
+		p, err := strconv.Atoi(indPow[1])
+		if err != nil {
+			return err
+		}
+		if p < 3 && p > -1 {
+			t.power = p
+		} else {
+			return errors.New("degree too high\"X^2\"")
+		}
+	} else {
+		return errors.New("argument not of form \"X^2\"")
 	}
-	t.power = p
 	return nil
+}
+
+func isOperator(s string) bool {
+	ops := []string{"*", "/", "+", "-"}
+	for _, v := range ops {
+		if s == v {
+			return true
+		}
+	}
+	return false
 }
