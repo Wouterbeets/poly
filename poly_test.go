@@ -104,8 +104,8 @@ func TestParseMul(t *testing.T) {
 		if test.want != term.multip {
 			t.Errorf("input = \n%+v\nexpected output \n%+v\n got \n%+v\n", test.input, test.want, term.multip)
 		}
-		t.Errorf("errors not alike\ninput = \n%+v\nexpected output \n%+v\n got \n%+v\n", test.input, test.err, err)
 		if (test.err == nil && err != nil) || (test.err != nil && err == nil) {
+			t.Errorf("errors not alike\ninput = \n%+v\nexpected output \n%+v\n got \n%+v\n", test.input, test.err, err)
 		}
 	}
 }

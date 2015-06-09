@@ -18,8 +18,8 @@ func (eq *Equa) ParseEq(str string) []error {
 		return append(retError, errors.New("Error: input needs one \"=\" in equation to solve"))
 	}
 	errChan := make(chan error)
-	go eq.Lhs.ParseEq(strs[0], errChan)
-	go eq.Rhs.ParseEq(strs[1], errChan)
+	go eq.Lhs.ParseEq(strings.Trim(strs[0], " "), errChan)
+	go eq.Rhs.ParseEq(strings.Trim(strs[1], " "), errChan)
 	for i := 0; i < 2; i++ {
 		if err := <-errChan; err != nil {
 			retError = append(retError, err)
@@ -81,6 +81,7 @@ type term struct {
 }
 
 func (t *term) parseMul(mulStr string) error {
+	mulStr = strings.Trim(mulStr, " ")
 	mul, err := strconv.Atoi(mulStr)
 	if err != nil {
 		return err
@@ -98,6 +99,7 @@ func (t *term) checkMulOp(opStr string) error {
 }
 
 func (t *term) parsePow(powStr string) error {
+	powStr = strings.Trim(powStr, " ")
 	indPow := strings.Split(powStr, "^")
 	if len(indPow) == 2 {
 		t.indet = indPow[0]
