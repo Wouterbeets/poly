@@ -6,6 +6,28 @@ import (
 	"strings"
 )
 
+type Equa struct {
+	Rhs Poly
+	Lhs Poly
+}
+
+func (eq *Equa) ParseEq(str string) error {
+	strs := strings.Split(str, "=")
+	if len(strs) != 2 {
+		return errors.New("Error: input needs one \"=\" in equation to solve")
+	}
+	err := eq.Lhs.ParseEq(strs[0])
+	if err != nil {
+		return err
+	} else {
+		err = eq.Rhs.ParseEq(strs[1])
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 type Poly struct {
 	degree   int
 	eqString string
@@ -24,7 +46,7 @@ func (eq *Poly) GetDegree(terms []term) {
 func (eq *Poly) ParseEq(str string) error {
 	eq.eqString = str
 	termStrs := strings.Split(str, " ")
-	for i := 0; i < len(termStrs); i++ {
+	for i := 0; i <= len(termStrs)-3; i++ {
 		t := &term{}
 		err := t.parseMul(termStrs[i])
 		if err != nil {
